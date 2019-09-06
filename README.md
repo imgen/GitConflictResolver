@@ -3,7 +3,7 @@ A small tool to resolve git conflicts
 
 ## Usage
 ```
-GitConflictResolver FILEPATH [RESOLVEMODE]
+GitConflictResolver [FILEPATH] [RESOLVEMODE]
 FILEPATH: The path of the file to process
 RESOLVEMODE: Indicate how to resolve the conflicted sections. Possible values: 
 mt - Put mine before theirs
