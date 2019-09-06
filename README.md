@@ -1,6 +1,7 @@
 # GitConflictResolver
 A small tool to resolve git conflicts
-Usage
+
+## Usage
 ```
 GitConflictResolver FILEPATH [RESOLVEMODE]
 FILEPATH: The path of the file to process
