@@ -38,33 +38,24 @@ none - Keep none");
             var lines = await File.ReadAllLinesAsync(file);
             var conflicts = new List<Conflict>();
             var context = new List<string>();
-            using (var walker = ((IEnumerable<string>) lines).GetEnumerator())
+            using (var walker = lines.OfType<string>().GetEnumerator())
             {
-                string GetNextLine()
+                string GetNextLine() => walker.MoveNext() ? walker.Current : null;
+                string line; 
+                while ((line = GetNextLine()) != null)
                 {
-                    walker.MoveNext();
-                    return walker.Current;
-                }
-                while (walker.MoveNext())
-                {
-                    var line = walker.Current;
                     if (line.StartsWith(ConflictHeader, StringComparison.Ordinal))
                     {
                         var mine = new List<string>();
-                        walker.MoveNext();
-                        line = walker.Current;
-                        while (!line.StartsWith(ConflictSeparator, StringComparison.Ordinal))
+                        while (!(line = GetNextLine()).StartsWith(ConflictSeparator, StringComparison.Ordinal))
                         {
                             mine.Add(line);
-                            line = GetNextLine();
                         }
 
                         var theirs = new List<string>();
-                        line = GetNextLine();
-                        while (!line.StartsWith(ConflictFooter, StringComparison.Ordinal))
+                        while (!(line = GetNextLine()).StartsWith(ConflictFooter, StringComparison.Ordinal))
                         {
                             theirs.Add(line);
-                            line = GetNextLine();
                         }
 
                         conflicts.Add(new Conflict(mine, theirs, context));
@@ -83,11 +74,8 @@ none - Keep none");
                 return 0;
             }
 
-            var lastConflict = conflicts.Last();
-            lastConflict.After = context;
-
+            conflicts.Last().After = context;
             var resolvedLines = conflicts.SelectMany(c => c.Resolve(mode)).ToArray();
-            
             var text = string.Join(Environment.NewLine, resolvedLines);
             await File.WriteAllTextAsync(file, text);
 
@@ -111,7 +99,7 @@ none - Keep none");
 
         public string[] Resolve(string mode)
         {
-            switch(mode)
+            switch (mode)
             {
                 case "mt":
                     return Before

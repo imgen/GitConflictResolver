@@ -12,5 +12,5 @@ your changes2
 =======
 their changes2
 >>>>>>> master
-context4
 context5
+context6
