@@ -40,29 +40,31 @@ none - Keep none");
             var context = new List<string>();
             using (var walker = ((IEnumerable<string>) lines).GetEnumerator())
             {
+                string GetNextLine()
+                {
+                    walker.MoveNext();
+                    return walker.Current;
+                }
                 while (walker.MoveNext())
                 {
                     var line = walker.Current;
-                    if (line.StartsWith(ConflictHeader))
+                    if (line.StartsWith(ConflictHeader, StringComparison.Ordinal))
                     {
                         var mine = new List<string>();
                         walker.MoveNext();
                         line = walker.Current;
-                        while (!line.StartsWith(ConflictSeparator))
+                        while (!line.StartsWith(ConflictSeparator, StringComparison.Ordinal))
                         {
                             mine.Add(line);
-                            walker.MoveNext();
-                            line = walker.Current;
+                            line = GetNextLine();
                         }
 
                         var theirs = new List<string>();
-                        walker.MoveNext();
-                        line = walker.Current;
-                        while (!line.StartsWith(ConflictFooter))
+                        line = GetNextLine();
+                        while (!line.StartsWith(ConflictFooter, StringComparison.Ordinal))
                         {
                             theirs.Add(line);
-                            walker.MoveNext();
-                            line = walker.Current;
+                            line = GetNextLine();
                         }
 
                         conflicts.Add(new Conflict(mine, theirs, context));
