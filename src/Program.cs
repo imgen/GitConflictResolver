@@ -11,7 +11,7 @@ namespace GitConflictResolver
         private const string ConflictHeader = "<<<<<<<", 
                              ConflictSeparator = "=======", 
                              ConflictFooter = ">>>>>>>";
-        private static readonly string[] PossibleModes = {"mt", "tm", "m", "t", "none"};
+        private static readonly string[] ResolveModes = {"mt", "tm", "m", "t", "none"};
         static async Task<int> Main(string[] args)
         {
             if (args.Length < 2)
@@ -30,51 +30,51 @@ none - Keep none");
 
             var file = args[0];
             var mode = args[1].ToLowerInvariant();
-            if (!PossibleModes.Contains(mode))
+            if (!ResolveModes.Contains(mode))
             {
                 Console.WriteLine($"Invalid resolve mode {mode}, possible values: mt, tm, m, t, none");
             }
 
             var lines = await File.ReadAllLinesAsync(file);
-
             var conflicts = new List<Conflict>();
-
             var context = new List<string>();
-            var after = new List<string>();
-            for (int i = 0; i < lines.Length; i++)
+            using (var walker = ((IEnumerable<string>) lines).GetEnumerator())
             {
-                var line = lines[i];
-                if (line.StartsWith(ConflictHeader))
+                while (walker.MoveNext())
                 {
-                    var mine = new List<string>();
-                    i++;
-                    line = lines[i];
-                    while (!line.StartsWith(ConflictSeparator))
+                    var line = walker.Current;
+                    if (line.StartsWith(ConflictHeader))
                     {
-                        mine.Add(line);
-                        i++;
-                        line = lines[i];
-                    }
+                        var mine = new List<string>();
+                        walker.MoveNext();
+                        line = walker.Current;
+                        while (!line.StartsWith(ConflictSeparator))
+                        {
+                            mine.Add(line);
+                            walker.MoveNext();
+                            line = walker.Current;
+                        }
 
-                    var theirs = new List<string>();
-                    i++;
-                    line = lines[i];
-                    while (!line.StartsWith(ConflictFooter))
+                        var theirs = new List<string>();
+                        walker.MoveNext();
+                        line = walker.Current;
+                        while (!line.StartsWith(ConflictFooter))
+                        {
+                            theirs.Add(line);
+                            walker.MoveNext();
+                            line = walker.Current;
+                        }
+
+                        conflicts.Add(new Conflict(mine, theirs, context));
+                        context = new List<string>();
+                    }
+                    else
                     {
-                        theirs.Add(line);
-                        i++;
-                        line = lines[i];
+                        context.Add(line);
                     }
-
-                    conflicts.Add(new Conflict(mine, theirs, context));
-                    context = new List<string>();
-                }
-                else
-                {
-                    context.Add(line);
                 }
             }
-
+            
             if (!conflicts.Any())
             {
                 Console.WriteLine($"There is no conflicts in file {file}");

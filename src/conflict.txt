@@ -1,0 +1,16 @@
+context1
+context2
+<<<<<<< yours
+your changes1
+=======
+their changes1
+>>>>>>> master
+context3
+context4
+<<<<<<< yours
+your changes2
+=======
+their changes2
+>>>>>>> master
+context4
+context5
