@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="GitConflictResolver.Windows\**" />
+    <EmbeddedResource Remove="GitConflictResolver.Windows\**" />
+    <None Remove="GitConflictResolver.Windows\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="conflict.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

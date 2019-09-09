@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace GitConflictResolver
 {
     class Program
     {
-        private const string Header = "<<<<<<<",  Separator = "=======", Footer = ">>>>>>>";
-        private static readonly string[] ResolveModes = {"mt", "tm", "m", "t", "none"};
-        static async Task<int> Main(string[] args)
+        private const string Header = "<<<<<<<", Separator = "=======", Footer = ">>>>>>>";
+        private static readonly string[] ResolveModes = { "mt", "tm", "m", "t", "none" };
+        static int Main(string[] args)
         {
             if (args.Length < 2)
             {
@@ -32,7 +31,7 @@ none - Keep none");
                 return -1;
             }
 
-            var lines = await File.ReadAllLinesAsync(file);
+            var lines = File.ReadAllLines(file);
             var (conflicts, context) = (new List<Conflict>(), new List<string>());
             using (var walker = lines.OfType<string>().GetEnumerator())
             {
@@ -43,7 +42,7 @@ none - Keep none");
                     while ((nextLine = GetNextLine()) != null && !nextLine.StartsWith(prefix, StringComparison.Ordinal))
                         yield return nextLine;
                 }
-                string line; 
+                string line;
                 while ((line = GetNextLine()) != null)
                 {
                     if (line.StartsWith(Header, StringComparison.Ordinal))
@@ -57,7 +56,7 @@ none - Keep none");
                         context.Add(line);
                 }
             }
-            
+
             if (!conflicts.Any())
             {
                 Console.WriteLine($"There is no conflicts in file {file}");
@@ -67,7 +66,7 @@ none - Keep none");
             conflicts.Last().After = context;
             var resolvedLines = conflicts.SelectMany(c => c.Resolve(mode)).ToArray();
             var text = string.Join(Environment.NewLine, resolvedLines);
-            await File.WriteAllTextAsync(file, text);
+            File.WriteAllText(file, text);
             return 0;
         }
     }
