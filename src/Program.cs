@@ -33,7 +33,6 @@ none - Keep none");
             }
 
             var lines = await File.ReadAllLinesAsync(file);
-            var (conflicts, context) = (new List<Conflict>(), new List<string>());
             using (var walker = lines.OfType<string>().GetEnumerator())
             {
                 string line = null;
@@ -43,7 +42,7 @@ none - Keep none");
                     while ((line = GetNextLine()) != null && !line.StartsWith(prefix, StringComparison.Ordinal))
                         yield return line;
                 }
-                context = TakeNextLineUntilStartsWith(Header).ToList();
+                var (conflicts, context) = (new List<Conflict>(), TakeNextLineUntilStartsWith(Header).ToList());
                 while (line != null)
                 {
                     var mine = TakeNextLineUntilStartsWith(Separator).ToList();
@@ -51,19 +50,18 @@ none - Keep none");
                     conflicts.Add(new Conflict(mine, theirs, context));
                     context = TakeNextLineUntilStartsWith(Header).ToList();
                 }
-            }
-            
-            if (!conflicts.Any())
-            {
-                Console.WriteLine($"There is no conflicts in file {file}");
+                if (!conflicts.Any())
+                {
+                    Console.WriteLine($"There is no conflicts in file {file}");
+                    return 0;
+                }
+
+                conflicts.Last().After = context;
+                var resolvedLines = conflicts.SelectMany(c => c.Resolve(mode)).ToArray();
+                var text = string.Join(Environment.NewLine, resolvedLines);
+                await File.WriteAllTextAsync(file, text);
                 return 0;
             }
-
-            conflicts.Last().After = context;
-            var resolvedLines = conflicts.SelectMany(c => c.Resolve(mode)).ToArray();
-            var text = string.Join(Environment.NewLine, resolvedLines);
-            await File.WriteAllTextAsync(file, text);
-            return 0;
         }
     }
     public class Conflict
