@@ -17,7 +17,7 @@ namespace GitConflictResolver
             if (args.Length < 2)
             {
                 Console.Error.WriteLine("Please provide enough parameters");
-                Console.Error.WriteLine(@"Usage: GitConflictResolver FILEPATH [RESOLVEMODE]
+                Console.Error.WriteLine(@"Usage: GitConflictResolver [FILEPATH] [RESOLVEMODE]
 FILEPATH: The path of the file to process
 RESOLVEMODE: Indicate how to resolve the conflicted sections. Possible values: 
 mt - Put mine before theirs
