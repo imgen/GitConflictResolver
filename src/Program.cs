@@ -47,7 +47,7 @@ none - Keep none");
                 {
                     var mine = TakeNextLineUntilStartsWith(Separator).ToList();
                     var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
-                    conflicts.Add(new Conflict(mine, theirs, context));
+                    conflicts.Add(new Conflict(context, mine, theirs));
                     context = TakeNextLineUntilStartsWith(Header).ToList();
                 }
                 if (!conflicts.Any())
@@ -66,9 +66,9 @@ none - Keep none");
     }
     public class Conflict
     {
-        public List<string> Mine, Theirs, Before, After;
-        public Conflict(List<string> mine, List<string> theirs, List<string> before) =>
-            (Mine, Theirs, Before, After) = (mine, theirs, before, new List<string>());
+        public List<string> Before, Mine, Theirs, After;
+        public Conflict(List<string> before, List<string> mine, List<string> theirs) =>
+            (Before, Mine, Theirs, After) = (before, mine, theirs, new List<string>());
         public IEnumerable<string> Resolve(string mode)
         {
             switch (mode)
