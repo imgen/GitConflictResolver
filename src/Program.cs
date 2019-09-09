@@ -42,20 +42,23 @@ none - Keep none");
                     while ((line = GetNextLine()) != null && !line.StartsWith(prefix, StringComparison.Ordinal))
                         yield return line;
                 }
-                var (conflicts, context) = (new List<Conflict>(), TakeNextLineUntilStartsWith(Header).ToList());
-                while (line != null)
+                var context = TakeNextLineUntilStartsWith(Header).ToList();
+                IEnumerable<Conflict> ParseConflicts()
                 {
-                    var mine = TakeNextLineUntilStartsWith(Separator).ToList();
-                    var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
-                    conflicts.Add(new Conflict(mine, theirs, context));
-                    context = TakeNextLineUntilStartsWith(Header).ToList();
+                    while(line != null)
+                    {
+                        yield return new Conflict(before: context,
+                            mine: TakeNextLineUntilStartsWith(Separator).ToList(),
+                            theirs: TakeNextLineUntilStartsWith(Footer).ToList());
+                        context = TakeNextLineUntilStartsWith(Header).ToList();
+                    }
                 }
+                var conflicts = ParseConflicts().ToList();
                 if (!conflicts.Any())
                 {
                     Console.WriteLine($"There is no conflicts in file {file}");
                     return 0;
                 }
-
                 conflicts.Last().After = context;
                 var resolvedLines = conflicts.SelectMany(c => c.Resolve(mode)).ToArray();
                 var text = string.Join(Environment.NewLine, resolvedLines);
@@ -66,9 +69,9 @@ none - Keep none");
     }
     public class Conflict
     {
-        public List<string> Mine, Theirs, Before, After;
-        public Conflict(List<string> mine, List<string> theirs, List<string> before) =>
-            (Mine, Theirs, Before, After) = (mine, theirs, before, new List<string>());
+        public List<string> Before, Mine, Theirs, After;
+        public Conflict(List<string> before, List<string> mine, List<string> theirs) =>
+            (Before, Mine, Theirs, After) = (before, mine, theirs, new List<string>());
         public IEnumerable<string> Resolve(string mode)
         {
             switch (mode)
