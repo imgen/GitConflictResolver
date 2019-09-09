@@ -37,23 +37,19 @@ none - Keep none");
             using (var walker = lines.OfType<string>().GetEnumerator())
             {
                 string GetNextLine() => walker.MoveNext() ? walker.Current : null;
+                IEnumerable<string> TakeNextLineUntil(Predicate<string> predicate)
+                {
+                    string nextLine;
+                    while (!predicate(nextLine = GetNextLine()))
+                        yield return nextLine;
+                }
                 string line; 
                 while ((line = GetNextLine()) != null)
                 {
                     if (line.StartsWith(Header, StringComparison.Ordinal))
                     {
-                        var mine = new List<string>();
-                        while (!(line = GetNextLine()).StartsWith(Separator, StringComparison.Ordinal))
-                        {
-                            mine.Add(line);
-                        }
-
-                        var theirs = new List<string>();
-                        while (!(line = GetNextLine()).StartsWith(Footer, StringComparison.Ordinal))
-                        {
-                            theirs.Add(line);
-                        }
-
+                        var mine = TakeNextLineUntil(s => s.StartsWith(Separator, StringComparison.Ordinal)).ToList();
+                        var theirs = TakeNextLineUntil(s => s.StartsWith(Footer, StringComparison.Ordinal)).ToList();
                         conflicts.Add(new Conflict(mine, theirs, context));
                         context = new List<string>();
                     }
