@@ -32,43 +32,36 @@ none - Keep none");
                 return -1;
             }
 
-            var lines = await File.ReadAllLinesAsync(file);
-            using (var walker = lines.OfType<string>().GetEnumerator())
+            (string[] lines, string line, int i, var conflicts) = (await File.ReadAllLinesAsync(file), null, -1, new List<Conflict>());
+            string GetNextLine() => ++i < lines.Length ? lines[i] : null;
+            IEnumerable<string> TakeNextLineUntilStartsWith(string prefix)
             {
-                string line = null;
-                string GetNextLine() => walker.MoveNext() ? walker.Current : null;
-                IEnumerable<string> TakeNextLineUntilStartsWith(string prefix)
-                {
-                    while ((line = GetNextLine()) != null && !line.StartsWith(prefix, StringComparison.Ordinal))
-                        yield return line;
-                }
-                var (conflicts, context) = (new List<Conflict>(), TakeNextLineUntilStartsWith(Header).ToList());
-                while (line != null)
-                {
-                    var mine = TakeNextLineUntilStartsWith(Separator).ToList();
-                    var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
-                    conflicts.Add(new Conflict(context, mine, theirs));
-                    context = TakeNextLineUntilStartsWith(Header).ToList();
-                }
-                if (!conflicts.Any())
-                {
-                    Console.WriteLine($"There is no conflicts in file {file}");
-                    return 0;
-                }
-
-                conflicts.Last().After = context;
-                var resolvedLines = conflicts.SelectMany(c => c.Resolve(mode)).ToArray();
-                var text = string.Join(Environment.NewLine, resolvedLines);
-                await File.WriteAllTextAsync(file, text);
+                while ((line = GetNextLine()) != null && !line.StartsWith(prefix, StringComparison.Ordinal))
+                    yield return line;
+            }
+            for(var context = TakeNextLineUntilStartsWith(Header).ToList(); line != null;)
+            {
+                var mine = TakeNextLineUntilStartsWith(Separator).ToList();
+                var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
+                conflicts.Add(new Conflict(mine, theirs, conflicts.Any()? null : context,
+                    (context = TakeNextLineUntilStartsWith(Header).ToList())));
+            }
+            if (!conflicts.Any())
+            {
+                Console.WriteLine($"There is no conflicts in file {file}");
                 return 0;
             }
+            var resolvedLines = conflicts.SelectMany(c => c.Resolve(mode)).ToArray();
+            var text = string.Join(Environment.NewLine, resolvedLines);
+            await File.WriteAllTextAsync(file, text);
+            return 0;
         }
     }
     public class Conflict
     {
         public List<string> Before, Mine, Theirs, After;
-        public Conflict(List<string> before, List<string> mine, List<string> theirs) =>
-            (Before, Mine, Theirs, After) = (before, mine, theirs, new List<string>());
+        public Conflict(List<string> mine, List<string> theirs, List<string> before = null, List<string> after = null) =>
+            (Before, Mine, Theirs, After) = (before?? new List<string>(), mine, theirs, after?? new List<string>());
         public IEnumerable<string> Resolve(string mode)
         {
             switch (mode)
