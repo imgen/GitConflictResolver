@@ -37,10 +37,10 @@ none - Keep none");
             using (var walker = lines.OfType<string>().GetEnumerator())
             {
                 string GetNextLine() => walker.MoveNext() ? walker.Current : null;
-                IEnumerable<string> TakeNextLineUntil(Predicate<string> predicate)
+                IEnumerable<string> TakeNextLineUntilStartsWith(string prefix)
                 {
                     string nextLine;
-                    while (!predicate(nextLine = GetNextLine()))
+                    while ((nextLine = GetNextLine()) != null && !nextLine.StartsWith(prefix, StringComparison.Ordinal))
                         yield return nextLine;
                 }
                 string line; 
@@ -48,15 +48,13 @@ none - Keep none");
                 {
                     if (line.StartsWith(Header, StringComparison.Ordinal))
                     {
-                        var mine = TakeNextLineUntil(s => s.StartsWith(Separator, StringComparison.Ordinal)).ToList();
-                        var theirs = TakeNextLineUntil(s => s.StartsWith(Footer, StringComparison.Ordinal)).ToList();
+                        var mine = TakeNextLineUntilStartsWith(Separator).ToList();
+                        var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
                         conflicts.Add(new Conflict(mine, theirs, context));
                         context = new List<string>();
                     }
                     else
-                    {
                         context.Add(line);
-                    }
                 }
             }
             
