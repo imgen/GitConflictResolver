@@ -7,8 +7,11 @@
 
   <ItemGroup>
     <Compile Remove="GitConflictResolver.Windows\**" />
+    <Compile Remove="packages\**" />
     <EmbeddedResource Remove="GitConflictResolver.Windows\**" />
+    <EmbeddedResource Remove="packages\**" />
     <None Remove="GitConflictResolver.Windows\**" />
+    <None Remove="packages\**" />
   </ItemGroup>
 
   <ItemGroup>

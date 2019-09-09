@@ -36,25 +36,20 @@ none - Keep none");
             var (conflicts, context) = (new List<Conflict>(), new List<string>());
             using (var walker = lines.OfType<string>().GetEnumerator())
             {
+                string line = null;
                 string GetNextLine() => walker.MoveNext() ? walker.Current : null;
                 IEnumerable<string> TakeNextLineUntilStartsWith(string prefix)
                 {
-                    string nextLine;
-                    while ((nextLine = GetNextLine()) != null && !nextLine.StartsWith(prefix, StringComparison.Ordinal))
-                        yield return nextLine;
+                    while ((line = GetNextLine()) != null && !line.StartsWith(prefix, StringComparison.Ordinal))
+                        yield return line;
                 }
-                string line; 
-                while ((line = GetNextLine()) != null)
+                context = TakeNextLineUntilStartsWith(Header).ToList();
+                while (line != null)
                 {
-                    if (line.StartsWith(Header, StringComparison.Ordinal))
-                    {
-                        var mine = TakeNextLineUntilStartsWith(Separator).ToList();
-                        var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
-                        conflicts.Add(new Conflict(mine, theirs, context));
-                        context = new List<string>();
-                    }
-                    else
-                        context.Add(line);
+                    var mine = TakeNextLineUntilStartsWith(Separator).ToList();
+                    var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
+                    conflicts.Add(new Conflict(mine, theirs, context));
+                    context = TakeNextLineUntilStartsWith(Header).ToList();
                 }
             }
             
