@@ -44,7 +44,7 @@ none - Keep none");
                 var mine = TakeNextLineUntilStartsWith(Separator).ToList();
                 var theirs = TakeNextLineUntilStartsWith(Footer).ToList();
                 conflicts.Add(new Conflict(mine, theirs, conflicts.Any()? null : context,
-                    (context = TakeNextLineUntilStartsWith(Header).ToList())));
+                    context = TakeNextLineUntilStartsWith(Header).ToList()));
             }
             if (!conflicts.Any())
             {
