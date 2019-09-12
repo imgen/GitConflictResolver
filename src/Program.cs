@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-
 namespace GitConflictResolver
 {
     class Program
@@ -40,10 +39,8 @@ none - Keep none");
                     newLines = mode.SelectMany(c => changes.ContainsKey(c) ? changes[c] : new List<string>()).ToList();
                     (currentPrefix, changes['m'], changes['t']) = ("", new List<string>(), new List<string>());
                 }
-                else if (currentPrefix == "")
-                    newLines.Add(line);
                 else
-                    (currentPrefix == "<<<<<<<" ? changes['m'] : changes['t']).Add(line);
+                    (currentPrefix == "<<<<<<<" ? changes['m'] : currentPrefix == "======="? changes['t'] : newLines).Add(line);
                 return newLines;
             }).ToArray();
             await File.WriteAllTextAsync(file, string.Join(Environment.NewLine, resolvedLines));
