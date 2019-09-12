@@ -28,19 +28,16 @@ none - Keep none");
                 Console.WriteLine($"Invalid resolve mode {mode}");
                 return -1;
             }
-            var (changes, currentPrefix) = (new Dictionary<char, List<string>> { ['m'] = new List<string>(), ['t'] = new List<string>() }, "");
+            var (changes, curMode) = (new Dictionary<char, List<string>> { ['m'] = new List<string>(), ['t'] = new List<string>() }, ' ');
             var resolvedLines = (await File.ReadAllLinesAsync(file)).SelectMany(line =>
             {
-                var (newLines, prefix) = (new List<string>(), line.Substring(0, Math.Min(line.Length, ">>>>>>>".Length)));
-                if (prefix == "<<<<<<<" || prefix == "=======")
-                    currentPrefix = prefix;
-                else if (prefix == ">>>>>>>")
-                {
-                    newLines = mode.SelectMany(c => changes.ContainsKey(c) ? changes[c] : new List<string>()).ToList();
-                    (currentPrefix, changes['m'], changes['t']) = ("", new List<string>(), new List<string>());
-                }
-                else
-                    (currentPrefix == "<<<<<<<" ? changes['m'] : currentPrefix == "======="? changes['t'] : newLines).Add(line);
+                (var newLines, var prefix) = (new List<string>(), line.Substring(0, Math.Min(line.Length, ">>>>>>>".Length)));
+                curMode = prefix == "<<<<<<<"? 'm' : prefix == "======="? 't' : curMode;
+                if (prefix == ">>>>>>>")
+                    (newLines, changes['m'], changes['t']) = (mode.SelectMany(c => changes.ContainsKey(c) ? changes[c] : new List<string>()).ToList(), 
+                                new List<string>(), new List<string>());
+                else if (prefix != "<<<<<<<" && prefix != "=======")
+                    (changes.ContainsKey(curMode)? changes[curMode] : newLines).Add(line);
                 return newLines;
             }).ToArray();
             await File.WriteAllTextAsync(file, string.Join(Environment.NewLine, resolvedLines));
