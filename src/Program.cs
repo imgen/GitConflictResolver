@@ -28,18 +28,25 @@ none - Keep none");
                 Console.WriteLine($"Invalid resolve mode {mode}");
                 return -1;
             }
-            var (changes, curMode) = (new Dictionary<char, List<string>> { ['m'] = new List<string>(), ['t'] = new List<string>() }, ' ');
+            var changes = new Dictionary<char, List<string>>();
+            foreach(var keyChar in "mtcn")    
+                changes[keyChar] = new List<string>();
+            var modeMap = new Dictionary<string, char> { ["<<<<<<<"] = 'm', ["======="] = 't', [">>>>>>>"] = 'c'};
+            var curMode = 'c';
             var resolvedLines = (await File.ReadAllLinesAsync(file)).SelectMany(line =>
             {
-                (var newLines, var prefix) = (new List<string>(), line.Substring(0, Math.Min(line.Length, ">>>>>>>".Length)));
-                if (prefix == "<<<<<<<" || prefix == "=======")
-                    curMode = prefix == "<<<<<<<"? 'm' : 't';
-                else if (prefix == ">>>>>>>") { 
-                    newLines = mode.SelectMany(c => changes.ContainsKey(c) ? changes[c] : new List<string>()).ToList();
-                    (changes['m'], changes['t'], curMode) = (new List<string>(), new List<string>(), ' ');
-                }  else
-                    (changes.ContainsKey(curMode)? changes[curMode] : newLines).Add(line);
-                return newLines;
+                var prefix = line.Substring(0, Math.Min(line.Length, ">>>>>>>".Length));
+                curMode = modeMap.ContainsKey(prefix)? modeMap[prefix] : curMode;
+                if (!modeMap.ContainsKey(prefix)) 
+                    changes[curMode].Add(line);
+                else if (modeMap[prefix] == 'c')
+                {
+                    var newLines = ("c" + mode).SelectMany(ch => changes[ch]).ToArray();
+                    foreach(var key in changes.Keys)    
+                        changes[key].Clear();
+                    return newLines;
+                }
+                return new string[0];
             }).ToArray();
             await File.WriteAllTextAsync(file, string.Join(Environment.NewLine, resolvedLines));
             return 0;
