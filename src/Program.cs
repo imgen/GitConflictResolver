@@ -47,7 +47,7 @@ none - Keep none");
                     return newLines;
                 }
                 return new string[0];
-            }).ToArray();
+            }).ToList();
             resolvedLines.AddRange(changes['c']);
             await File.WriteAllTextAsync(file, string.Join(Environment.NewLine, resolvedLines));
             return 0;
